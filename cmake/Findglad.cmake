@@ -1,0 +1,7 @@
+if (NOT TARGET glad)
+    set(GLAD_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/libs/glad/include)
+    set(GLAD_SRC ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
+    add_library(glad STATIC ${GLAD_SRC})
+    target_include_directories(glad PUBLIC ${GLAD_INCLUDE_DIR})
+    add_library(glad::glad ALIAS glad)
+endif()
