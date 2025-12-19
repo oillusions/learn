@@ -44,15 +44,15 @@ const glm::vec3& Transform::getOrigin() const {
     return _origin;
 }
 
-const glm::vec3 &Transform::getPosition() {
+const glm::vec3 &Transform::getPosition() const {
     return _position;
 }
 
-const glm::vec3 &Transform::getRotation() {
+const glm::vec3 &Transform::getRotation() const {
     return _rotation;
 }
 
-const glm::vec3 &Transform::getScale() {
+const glm::vec3 &Transform::getScale() const {
     return _scale;
 }
 
@@ -76,4 +76,28 @@ Transform &Transform::setTranslate(const glm::vec3 &vec) {
 
 bool Transform::isDirty() const {
     return _isDirty;
+}
+
+glm::mat4 Transform::worldMatrix(const std::vector<Transform> &transforms)  {
+    glm::mat4 out{1};
+    for (const auto& t : transforms) {
+        out *= t.getMatrix();
+    }
+    return out;
+}
+
+glm::mat4 Transform::worldMatrix(const std::vector<std::reference_wrapper<const Transform>> &transforms)  {
+    glm::mat4 out{1};
+    for (const auto& t : transforms) {
+        out *= t.get().getMatrix();
+    }
+    return out;
+}
+
+glm::mat4 Transform::worldMatrix(const std::vector<std::reference_wrapper<Transform>> &transforms)  {
+    glm::mat4 out{1};
+    for (const auto& t : transforms) {
+        out *= t.get().getMatrix();
+    }
+    return out;
 }

@@ -15,16 +15,20 @@ class Transform {
         Transform& setScale(const glm::vec3& vec);
         Transform& setRotate(const glm::vec3& vec);
 
-        const glm::vec3& getPosition();
-        const glm::vec3& getRotation();
-        const glm::vec3& getScale();
+        const glm::vec3& getPosition() const;
+        const glm::vec3& getRotation() const;
+        const glm::vec3& getScale() const;
         const glm::vec3& getOrigin() const;
+
+        static glm::mat4 worldMatrix(const std::vector<Transform>& transforms);
+        static glm::mat4 worldMatrix(const std::vector<std::reference_wrapper<const Transform>> &transforms);
+        static glm::mat4 worldMatrix(const std::vector<std::reference_wrapper<Transform>> &transforms);
 
         bool isDirty() const;
 
         [[nodiscard]] glm::mat4 getMatrix() const;
 
-        operator glm::mat4(){
+        operator glm::mat4() const{
             return getMatrix();
         }
     private:

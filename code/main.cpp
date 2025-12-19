@@ -12,6 +12,9 @@
 using namespace std;
 namespace fs = filesystem;
 
+double deltaTime{};
+double lastTime{};
+
 int main() {
     stbi_set_flip_vertically_on_load(true);
     glfwInit();
@@ -37,9 +40,13 @@ int main() {
 
     glViewport(0, 0, 800, 600);
 
+    double currentTime{};
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        test.render();
+        currentTime = glfwGetTime();
+        deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        test.render(deltaTime);
         glfwSwapBuffers(window);
     }
     glfwTerminate();

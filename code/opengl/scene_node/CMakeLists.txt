@@ -7,8 +7,7 @@ target_include_directories(SceneNode PUBLIC
 )
 
 target_sources(SceneNode PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/TransForm.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/SceneNode.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Transform.cpp
 )
 
 target_link_libraries(SceneNode PRIVATE
