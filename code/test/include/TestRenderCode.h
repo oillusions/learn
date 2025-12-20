@@ -11,6 +11,8 @@
 #include <Node.hpp>
 #include <VertexLayout.hpp>
 
+#include "Model.h"
+
 class TestRenderCube {
     public:
         explicit TestRenderCube(GLFWwindow* window);
@@ -34,28 +36,13 @@ class TestRenderCube {
 
     private:
         GLFWwindow* window;
-
-        const std::filesystem::path vertexPath = "resource/shader/vertex.glsl";
-        const std::filesystem::path fragmentPath = "resource/shader/fragment.glsl";
-        unsigned int vao{};
-        unsigned int vbo{};
-        unsigned int ebo{};
-        Shader vertexShader;
-        Shader fragmentShader;
         unsigned int texture{};
         int width{}, height{}, nrChannels{};
         unsigned char* data{};
-        ShaderProgram program;
-        VertexLayout<float> bufferLayout;
+        std::map<std::string, Model> models;
         double _delta{};
 
-        std::vector<float> vv;
-        std::vector<unsigned int> vi;
-
         Node<Transform> rootNode = Node<Transform>("root");
-        Node<Transform>& testNode = rootNode.addChild("test");
-        Node<Transform>& testModelNode = testNode.addChild("model");
         glm::mat4 proj{1.0f};
         Transform camera;
-        bool isRotate = false;
 };

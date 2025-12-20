@@ -19,8 +19,8 @@ target_link_libraries(Test PRIVATE
 	glm::glm
 	glfw
 	stb::stb
-	gl::SceneNode
 	gl::Shader
 	gl::Utils
+	gl::test
 	utils::ModelLoader
 )

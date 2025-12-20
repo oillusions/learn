@@ -7,9 +7,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
+#include <glm/gtc/quaternion.hpp>
 
 #include <ModelParser.h>
-#include <glm/gtc/quaternion.hpp>
+#include <Bezier.h>
 
 
 using namespace std;
@@ -19,26 +20,17 @@ fs::path modelPath = "resource/model/model.obj";
 
 double center_x{0}, center_y{0};
 
-TestRenderCube::TestRenderCube(GLFWwindow* window): window(window),
-    vertexShader(Shader(Shader::Vertex, fileLoader(vertexPath))),
-    fragmentShader(Shader(Shader::Fragment, fileLoader(fragmentPath))),
-    bufferLayout(VertexLayout<float>::builder()
-        .appendElement("vertices", 3)
-        .appendElement("texCoord", 2)
-        .build())
+TestRenderCube::TestRenderCube(GLFWwindow* window):
+    window(window)
 {
     proj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     data = stbi_load("resource/texture/texture.jpg", &width, &height, &nrChannels, 0);
     glfwSetWindowUserPointer(window, this);
-    bufferLayout = ModelParser::ObjModelLoader(fileLoader(modelPath));
     center_x = 800 / 2;
     center_y = 600 / 2;
 }
 
 TestRenderCube::~TestRenderCube() {
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
     glDeleteTextures(1, &texture);
 }
 
@@ -49,19 +41,16 @@ void TestRenderCube::init() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
+    map<string, VertexLayout<float>> modelVertices = ModelParser::ObjModelLoader(fileLoader(modelPath));
 
-    vv = bufferLayout.ExpandIndices();
-    vi = bufferLayout.bufferOfIndices();
-
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
-    glGenTextures(1, &texture);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER,   vv.size() * sizeof(float), vv.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vi.size() * sizeof(unsigned int), vi.data(), GL_STATIC_DRAW);
+    for (auto& e : modelVertices) {
+        cout << "modelName: " << e.first << endl;
+        e.second.test();
+        models.emplace(e.first, Model(e.first, rootNode.addChild(e.first), std::move(e.second)));
+    }
+    for (auto& model : models) {
+        model.second.init();
+    }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -78,38 +67,32 @@ void TestRenderCube::init() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    bufferLayout.bufferLayoutDeclaration();
 
-    program.attach(vertexShader);
-    program.attach(fragmentShader);
-    (void) program.link();
-
-    auto& modelTran = testModelNode.get();
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-    modelTran.rotate({glm::radians(-90.0f), glm::radians(122.5f), 0.0f});
-    modelTran.translate({0.0f, 0.0f, -10.0f});
-    modelTran.scale({0.5f, 0.5f, 0.5f});
+
+
 
     glEnable(GL_DEPTH_TEST);
-    camera.translate({0.0f, 0.0f, -15.0f});
+    camera.translate({0.0f, 0.0f, 1.0f});
+    camera.configInverse();
 
     stbi_image_free(data);
 }
 
 void TestRenderCube::render(double delta) {
     _delta = delta;
-    static auto dataset = testModelNode.getTraceToRoot(true);
+
     glClearColor(0.78431372f, 0.78431372f, 1.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    program.use();
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glBindVertexArray(vao);
-    if (isRotate) {
-        testNode.get().rotate({0.0f, glm::radians(90.0f * _delta), 0.0f});
+
+    static Bezier test({0.25 ,0.1}, {0.25, 1.0});
+    const glm::mat4& cameraMatrix = camera.getMatrix();
+
+    for (auto& model : models) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        model.second.render(delta, proj, cameraMatrix);
     }
-    program["Transform"].setMat4(proj * camera.getMatrix() * Transform::worldMatrix(dataset));
-    glDrawElements(GL_TRIANGLES, vi.size(), GL_UNSIGNED_INT, nullptr);
 }
 
 string TestRenderCube::fileLoader(const fs::path& path) {
@@ -124,12 +107,12 @@ string TestRenderCube::fileLoader(const fs::path& path) {
         return {};
     }
 
-    return string(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
+    return {istreambuf_iterator<char>(file), istreambuf_iterator<char>()};
 }
 
 void TestRenderCube::onFrameBufferSizeCallback(int width, int height) {
     glViewport(0, 0, width, height);
-    proj = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f);
+    proj = glm::perspective(glm::radians(90.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
     center_x = width / 2;
     center_y = height / 2;
     render(_delta);
@@ -147,41 +130,42 @@ void TestRenderCube::onKeyCallback(int key, int scancode, int action, int mods) 
             break;
         }
         case GLFW_KEY_W: {
-            camera.translate(glm::vec4({0.0, 0.0, 45.0  * _delta, 1.0}) * glm::mat4_cast(glm::quat(camera.getRotation())));
+            camera.translate(glm::vec4({0.0, 0.0, -45.0  * _delta, 1.0}) * glm::mat4_cast(glm::inverse(camera.getRotation())));
             break;
         }
         case GLFW_KEY_S: {
-            camera.translate(glm::vec4({0.0, 0.0, -45.0  * _delta, 1.0}) * glm::mat4_cast(glm::quat(camera.getRotation())));
+            camera.translate(glm::vec4({0.0, 0.0, 45.0  * _delta, 1.0}) * glm::mat4_cast(glm::inverse(camera.getRotation())));
             break;
         }
         case GLFW_KEY_A: {
-            camera.translate(glm::vec4({45.0  * _delta, 0.0, 0.0, 1.0}) * glm::mat4_cast(glm::quat(camera.getRotation())));
+            camera.translate(glm::vec4({-45.0  * _delta, 0.0, 0.0, 1.0}) * glm::mat4_cast(glm::inverse(camera.getRotation())));
             break;
         }
         case GLFW_KEY_D: {
-            camera.translate(glm::vec4({-45.0  * _delta, 0.0, 0.0, 1.0}) * glm::mat4_cast(glm::quat(camera.getRotation())));
+            camera.translate(glm::vec4({45.0  * _delta, 0.0, 0.0, 1.0}) * glm::mat4_cast(glm::inverse(camera.getRotation())));
             break;
         }
         case GLFW_KEY_R: {
-            testNode.get().setRotate({0, 0, 0});
-            testNode.get().setTranslate({0, 0, 0});
-            camera.setRotate({0, 0, 0});
-            camera.setTranslate({0, 0, -15.0f});
+
+            camera.setRotate({0, 0, 0})
+                .setTranslate({0, 0, 1.0f});
             break;
         }
-        case GLFW_KEY_SPACE: {}
-            if (action == GLFW_RELEASE) isRotate = !isRotate;
+        case GLFW_KEY_SPACE: {
             break;
+        }
         default: ;
     }
 }
 
 void TestRenderCube::onMouseCallback(double x, double y) {
     double offset_x{}, offset_y{};
-    offset_x = x - center_x;
-    offset_y = y - center_y;
+
+    offset_x = center_x - x;
+    offset_y = center_y - y;
     glfwSetCursorPos(window, center_x, center_y);
-    camera.rotate({glm::radians( 5.0 *offset_y * _delta), glm::radians(5.0 * offset_x * _delta), 0.0f});
+    camera.rotate({glm::radians( 5.0 * offset_y * _delta), 0.0f, 0.0f});
+    camera.rotate({0.0f, glm::radians(5.0 * offset_x * _delta), 0.0f});
 }
 
 

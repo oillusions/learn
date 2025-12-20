@@ -23,16 +23,10 @@ find_package(stb_image REQUIRED)
 set(GLM_BUILD_LIBRARY OFF)
 
 add_subdirectory(code/opengl/shader)
-add_subdirectory(code/opengl/scene_node)
 add_subdirectory(code/opengl/utils)
+add_subdirectory(code/opengl/test)
 add_subdirectory(code/utils/model_loader)
 add_subdirectory(code/test)
-
-#target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
-#	-static-libgcc
-#	-static-libstdc++
-#	-static
-#)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
 	OpenGL::GL
@@ -41,10 +35,22 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
     glfw
 	stb::stb
 	gl::Shader
-	gl::SceneNode
 	gl::Utils
+	gl::test
 	utils::ModelLoader
 	Test
 )
-
-
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+	target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+		-static-libgcc
+		-static-libstdc++
+		-static
+	)
+#	if(WIN32)
+#		if(MSVC)
+#			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+#		elseif(MINGW)
+#			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
+#		endif()
+#	endif()
+endif()
