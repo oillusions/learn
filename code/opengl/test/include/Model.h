@@ -17,8 +17,8 @@ class Model {
         Model(const Model& other) = delete;
         Model& operator = (const Model& other) = delete;
 
-        Model(Model&& other) noexcept = default;
-        Model& operator = (Model&& other) noexcept = delete;
+        Model(Model&& other) noexcept;
+        Model& operator = (Model&& other) noexcept;
 
         void init();
         void render(double delta, const glm::mat4& projection, const glm::mat4& camera);

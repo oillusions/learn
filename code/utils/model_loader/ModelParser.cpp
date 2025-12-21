@@ -12,82 +12,121 @@ std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader(const st
 
 std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader::parser(const std::string &source) {
     map<string, VertexLayout<float>> models{};
-    istringstream sourceStrStream(source);
+    istringstream sourceIss(source);
     string line;
-    while (getline(sourceStrStream, line)) {
+    VertexCounter v_size{0, 0}, t_size{0, 0}, n_size{0, 0};
+    while (getline(sourceIss, line)) {
         if (line[0] == '#' || line.empty()) continue;
         if (line[0] == 'o') {
-            VertexProcess(line.substr(2, line.back()), sourceStrStream, models);
+            objectProcess(line.substr(2, line.back()), sourceIss, models, v_size, t_size, n_size);
         }
     }
+    cout << "总顶点数 " << v_size.count + t_size.count + n_size.count << endl;
     return models;
 }
 
-void ModelParser::ObjModelLoader::VertexProcess(const string& name, istringstream &source, std::map<std::string, VertexLayout<float>>& models) {
+void ModelParser::ObjModelLoader::objectProcess(const string& name, istringstream &source, std::map<std::string, VertexLayout<float>>& models, VertexCounter& v, VertexCounter& t, VertexCounter& n) {
     auto builder = VertexLayout<float>::builder();
     vector<float> vertices{};
     vector<float> texCoord{};
     vector<float> normal{};
-    string indexStr;
+    vector<unsigned int> indices;
+
+    VertexCounter local_v{0, v.count}, local_t{0, t.count}, local_n{0, n.count};
+
     string line;
     while (getline(source, line)) {
         if (line[0] == '#' || line.empty()) continue;
         if (line[0] == 'o') {
-            VertexProcess(line.substr(2, line.back()), source, models);
+            v.start += local_v.count;
+            v.count += local_v.count;
+            t.start += local_t.count;
+            t.count += local_t.count;
+            n.start += local_n.count;
+            n.count += local_n.count;
+
+            objectProcess(line.substr(2), source, models, v, t, n);
+            break;
         }
-        lineProcess(line, vertices, texCoord, normal, indexStr);
+        lineProcess(line, vertices, texCoord, normal, indices, local_v, local_t, local_n);
     }
     cout << "加载模型 " << name << ": " << endl;
     if (!vertices.empty()) {
+        vertices.shrink_to_fit();
         builder.appendElement("vertices", 3)
-            .additionalSource("vertices", std::move(vertices));
-        cout << name << ": 添加Vertices" << endl;
+            .attachSource("vertices", std::move(vertices));
+        cout << name << ": 添加Vertices, 总计 " << local_v.count << " 顶点" << endl;
     }
     if (!texCoord.empty()) {
+        texCoord.shrink_to_fit();
         builder.appendElement("texCoord", 2)
-            .additionalSource("texCoord", std::move(texCoord));
-        cout << name << ": 添加TexCoord" << endl;
+            .attachSource("texCoord", std::move(texCoord));
+        cout << name << ": 添加TexCoord, 总计 " << local_t.count << "顶点" << endl;
     }
     if (!normal.empty()) {
+        normal.shrink_to_fit();
         builder.appendElement("normal", 3)
-            .additionalSource("normal", std::move(normal));
-        cout << name << ": 添加Normal" << endl;
+            .attachSource("normal", std::move(normal));
+        cout << name << ": 添加Normal, 总计 " << local_n.count << "顶点" << endl;
     }
-    if (!indexStr.empty()) {
-        builder.indices(std::move(indexStr));
-        cout << name << ": 添加Indices" << endl;
+    if (!indices.empty()) {
+        cout << name << ": 添加Indices, 总计 " << indices.size() << endl;
+        builder.attachIndices(std::move(indices));
     }
     models.emplace(name, std::move(builder.build()));
 }
 
-void ModelParser::ObjModelLoader::lineProcess(const std::string &line, vector<float>& vertices, vector<float>& texCoord, vector<float>& normal, string &indexStr) {
-    istringstream lineStrStream(line);
+void ModelParser::ObjModelLoader::lineProcess(const std::string &line, vector<float>& vertices, vector<float>& texCoord, vector<float>& normal, vector<unsigned int> &indices, VertexCounter& v, VertexCounter& t, VertexCounter& n) {
+    istringstream lineIss(line);
     string token;
-    while (getline(lineStrStream, token, ' ')) {
+    while (getline(lineIss, token, ' ')) {
         if (token == "v") {  // 顶点坐标
             float x, y, z;
-            lineStrStream >> x >> y >> z;
+            lineIss >> x >> y >> z;
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
+            v.count++;
         }
         else if (token == "vt") {  // 纹理坐标
-            float u, v;
-            lineStrStream >> u >> v;
-            texCoord.push_back(u);
-            texCoord.push_back(v);
+            float vertex_u, vertex_v;
+            lineIss >> vertex_u >> vertex_v;
+            texCoord.push_back(vertex_u);
+            texCoord.push_back(vertex_v);
+            t.count++;
         }
         else if (token == "vn") {  // 法线
             float x, y, z;
-            lineStrStream >> x >> y >> z;
+            lineIss >> x >> y >> z;
             normal.push_back(x);
             normal.push_back(y);
             normal.push_back(z);
+            n.count++;
         }
         else if (token == "f") {  // 面
-            while (getline(lineStrStream, token, ' ')) {
-                indexStr += line.substr(2, line.length());
-                indexStr += " ";
+            string fLine;
+            while (getline(lineIss, token, ' ')) {
+                string index;
+                istringstream tokenIss(token);
+                size_t counterIndex{0};
+                while (getline(tokenIss, index, '/')) {
+                    switch (counterIndex) {
+                        case 0: {
+                            indices.push_back(stoull(index) - v.start);
+                            break;
+                        }
+                        case 1: {
+                            indices.push_back(stoull(index) - t.start);
+                            break;
+                        }
+                        case 2: {
+                            indices.push_back(stoull(index) - n.start);
+                            break;
+                        }
+                        default: break;
+                    }
+                    counterIndex++;
+                }
                 break;
             }
         }

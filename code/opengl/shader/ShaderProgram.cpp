@@ -37,8 +37,8 @@ void ShaderProgram::use() const {
 }
 
 void ShaderProgram::initUniformMap() {
-    int count;
-    int maxLen;
+    int count{};
+    int maxLen{};
     glGetProgramiv(_location, GL_ACTIVE_UNIFORMS, &count);
     glGetProgramiv(_location, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxLen);
 

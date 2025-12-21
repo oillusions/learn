@@ -17,6 +17,11 @@ Model::Model(const std::string &name, Node<Transform>& modelTransformNode , Vert
     _modelInitTransform(_modelRootNode.addChild("ModelInitTransform")){
 }
 
+Model::Model(Model &&other) noexcept:
+    _{
+
+}
+
 Model::~Model() {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);

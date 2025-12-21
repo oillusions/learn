@@ -13,24 +13,25 @@
 template<typename T>
 class VertexLayout {
     public:
+
         class LayoutElement {
             public:
                 std::vector<T> _source;
                 std::string identifier;
-                unsigned int length;
-                unsigned int location{};
-                unsigned int origin{};
-                unsigned int step{};
+                size_t length;
+                size_t location{};
+                size_t origin{};
+                size_t step{};
                 bool* _isDirty{};
 
 
-                LayoutElement(const std::string& identifier, unsigned int length, unsigned int origin, unsigned int location):
+                LayoutElement(const std::string& identifier, size_t length, size_t origin, size_t location):
                     identifier(identifier),
                     length(length),
                     location(location),
                     origin(origin * sizeof(T)) {}
 
-                LayoutElement(const std::string& identifier, unsigned int length): LayoutElement(identifier, length, 0, 0) {}
+                LayoutElement(const std::string& identifier, size_t length): LayoutElement(identifier, length, 0, 0) {}
 
                 ~LayoutElement() = default;
 
@@ -65,7 +66,7 @@ class VertexLayout {
                     return *this;
                 }
 
-                const float& operator [] (unsigned int index) const {
+                const float& operator [] (size_t index) const {
                     return _source[index];
                 }
 
@@ -75,17 +76,17 @@ class VertexLayout {
             public:
                 LayoutBuilder() {
                     elements = std::vector<LayoutElement>();
-                    identifierMap = std::map<std::string, unsigned int>();
+                    identifierMap = std::map<std::string, size_t>();
                 }
                 ~LayoutBuilder() = default;
-                LayoutBuilder& elementNumber(unsigned int number) {
+                LayoutBuilder& elementNumber(size_t number) {
                     if (number != 0) {
                         elements.resize(number);
                     }
                     return *this;
                 }
 
-                LayoutBuilder& appendElement(const std::string& identifier, unsigned int length) {
+                LayoutBuilder& appendElement(const std::string& identifier, size_t length) {
                     if (identifier.empty()) {
                         throw std::runtime_error("identifier为空： " + identifier);
                     }
@@ -99,7 +100,7 @@ class VertexLayout {
                     return *this;
                 }
 
-                LayoutBuilder& additionalSource(const std::string& identifier, const std::vector<T>& source) {
+                LayoutBuilder& attachSource(const std::string& identifier, const std::vector<T>& source) {
                     if (elements.empty()) {
                         std::cerr << "当前未拥有任何元素" << std::endl;
                         return *this;
@@ -113,7 +114,7 @@ class VertexLayout {
                     return *this;
                 }
 
-                LayoutBuilder& additionalSource(const std::string& identifier, std::vector<T>&& source) {
+                LayoutBuilder& attachSource(const std::string& identifier, std::vector<T>&& source) {
                     if (elements.empty()) {
                         std::cerr << "当前未拥有任何元素" << std::endl;
                         return *this;
@@ -127,13 +128,13 @@ class VertexLayout {
                     return *this;
                 }
 
-                LayoutBuilder& indices(const std::string& indexStr) {
-                    _indexStr = indexStr;
+                LayoutBuilder& attachIndices(const std::vector<unsigned int>& indices) {
+                    rawIndices = indices;
                     return *this;
                 }
 
-                LayoutBuilder& indices(std::string&& indexStr) {
-                    _indexStr = std::move(indexStr);
+                LayoutBuilder& attachIndices(std::vector<unsigned int>&& indices) {
+                    rawIndices = std::move(indices);
                     return *this;
                 }
 
@@ -151,16 +152,16 @@ class VertexLayout {
                     for (auto& e : elements) {
                         e.step = originCounter * sizeof(T);
                     }
-                    return VertexLayout(std::move(elements), std::move(identifierMap), std::move(_indexStr));
+                    return VertexLayout(std::move(elements), std::move(identifierMap), std::move(rawIndices));
                 }
 
             private:
                 std::vector<LayoutElement> elements;
-                std::map<std::string, unsigned int> identifierMap;
-                std::string _indexStr;
-                unsigned int locationCounter{0};
-                unsigned int stepCounter{0};
-                unsigned int originCounter{0};
+                std::map<std::string, size_t> identifierMap;
+                std::vector<unsigned int> rawIndices;
+                size_t locationCounter{0};
+                size_t stepCounter{0};
+                size_t originCounter{0};
         };
 
         static LayoutBuilder builder() {
@@ -168,7 +169,7 @@ class VertexLayout {
         }
 
         explicit VertexLayout(std::vector<LayoutElement> layout):
-                VertexLayout(std::move(layout), std::move(std::map<std::string, unsigned int>())) {}
+                VertexLayout(std::move(layout), std::move(std::map<std::string, size_t>())) {}
 
         VertexLayout(const VertexLayout&) = delete;
         VertexLayout& operator=(const VertexLayout&) = delete;
@@ -177,12 +178,15 @@ class VertexLayout {
             _layout(std::move(other._layout)),
             _cache(std::move(other._cache)),
             _indices(std::move(other._indices)),
-            _indexStr(std::move(other._indexStr)),
+            _rawIndices(std::move(other._rawIndices)),
             _identifierMap(std::move(other._identifierMap)),
             _isDirty(true)
             {
+                size_t index{0};
                 for (LayoutElement& e : _layout) {
                     e._isDirty = &this->_isDirty;
+                    _identifierMap.emplace(e.identifier, index);
+                    index++;
                 }
             };
         VertexLayout& operator=(VertexLayout&& other)  noexcept {
@@ -190,7 +194,7 @@ class VertexLayout {
                 _layout = std::move(other._layout);
                 _cache = std::move(other._cache);
                 _indices = std::move(other._indices);
-                _indexStr = std::move(other._indexStr);
+                _rawIndices = std::move(other._rawIndices);
                 _identifierMap = std::move(other._identifierMap);
                 _isDirty = true;
                 for (LayoutElement& e : _layout) {
@@ -228,17 +232,22 @@ class VertexLayout {
             if (!_isDirty) {
                 return _cache;
             }
-            unsigned int size{};
+            size_t size{};
             for (const auto& e : _layout) {
                 size += e._source.size();
             }
             _cache.clear();
-            _cache.resize(size);
+            _cache.reserve(size);
+            _indices.clear();
+            _indices.reserve(size);
+
             std::cout << "size: " << size << std::endl;
-            unsigned stepCounter{};
-            unsigned int i{};
+            size_t stepCounter{};
+            size_t indexCounter{};
+            size_t i{};
             while (true) {
                 for (auto& e : _layout) {
+                    _cache.insert(_cache.end(), e.length, 0);
                     std::copy_n(e._source.begin() + (e.length * stepCounter),
                     e.length,
                     _cache.begin() + i
@@ -246,6 +255,8 @@ class VertexLayout {
                     i += e.length;
                 }
                 stepCounter++;
+                _indices.push_back(indexCounter);
+                indexCounter++;
                 if (i >= size) break;
             }
 
@@ -254,15 +265,15 @@ class VertexLayout {
             return _cache;
         }
 
-        void indices(const std::string& indexStr) {
+        void indices(const std::vector<unsigned int>& indexStr) {
             if (!indexStr.empty()) {
-                _indexStr = indexStr;
+                _rawIndices = indexStr;
             }
         }
 
-        void indices(std::string&& indexStr) {
+        void indices(std::vector<unsigned int>&& indexStr) {
             if (!indexStr.empty()) {
-                _indexStr = std::move(indexStr);
+                _rawIndices = std::move(indexStr);
             }
         }
 
@@ -271,49 +282,38 @@ class VertexLayout {
             if (!_isDirty) {
                 return _cache;
             }
-            if (_indexStr.empty()) {
+            if (_rawIndices.empty()) {
                 std::cerr << "错误: 索引为空" << std::endl;
                 return _cache;
             }
 
-            std::istringstream indicesStrStream(_indexStr);
-            std::string vertexIndex;
-            std::vector vertexIndices = std::vector<std::string>();
-            while (std::getline(indicesStrStream, vertexIndex, ' ')) {
-                vertexIndices.push_back(vertexIndex);
-            }
-            if (vertexIndices.empty()) {
+            if (_rawIndices.empty()) {
                 std::cerr << "错误: 顶点索引为空" << std::endl;
                 return _cache;
             }
-            unsigned int size = (_layout[0].step / sizeof(T)) * vertexIndices.size();
+            size_t size = (_rawIndices.size() / _layout.size()) * (_layout[0].step / sizeof(T));
             _cache.clear();
-            _cache.resize(size);
+            _cache.reserve(size);
             _indices.clear();
-            _indices.resize(vertexIndices.size());
+            _indices.reserve(_rawIndices.size() / (_layout[0].step / sizeof(T)));
 
-            unsigned int index_{};
-            unsigned int i{};
-            for (std::string& index : vertexIndices) {
-                if (index.empty()) continue;
-                std::istringstream indexStrStream(index);
-                std::string internalIndex;
-                for (LayoutElement& e : _layout) {
-                    if (std::getline(indexStrStream, internalIndex, '/')) {
-                        if (internalIndex.empty()) {
-                            std::cerr << "错误: 索引值留空" << std::endl;
-                            return _cache;
-                        }
-                        unsigned int internalIndex_ = std::stoul(internalIndex) - 1;
-                        std::copy_n(
-                            e._source.begin() + (internalIndex_ * e.length),
-                            e.length,
-                            _cache.begin() + i
-                        );
-                        i += e.length;
-                    }
-                }
-                _indices.push_back(index_++);
+            size_t i{};
+            size_t stepCounter{0};
+            size_t elementIndex{0};
+            size_t indexCounter{0};
+            for (const auto& index : _rawIndices) {
+                auto& e = _layout.at(elementIndex);
+                _cache.insert(_cache.end(), e.length, 0);
+                std::copy_n(e._source.begin() + (e.length * index),
+                    e.length,
+                    _cache.begin() + i
+                    );
+                i += e.length;
+                stepCounter++;
+                elementIndex++;
+                elementIndex %= _layout.size();
+                _indices.push_back(indexCounter);
+                indexCounter++;
             }
             _isDirty = false;
             return _cache;
@@ -343,24 +343,27 @@ class VertexLayout {
 
     private:
         std::vector<LayoutElement> _layout;
-        std::map<std::string, unsigned int> _identifierMap;
+        std::map<std::string, size_t> _identifierMap;
         std::vector<T> _cache;
         std::vector<unsigned int> _indices;
-        std::string _indexStr;
+        std::vector<unsigned int> _rawIndices;
         bool _isDirty{true};
 
-        explicit VertexLayout(std::vector<LayoutElement> layout, std::map<std::string, unsigned int> identifierMap, std::string indexStr):
+        explicit VertexLayout(std::vector<LayoutElement> layout, std::map<std::string, size_t> identifierMap, std::vector<unsigned int> rawIndices):
             _layout(std::move(layout)),
             _identifierMap(std::move(identifierMap)),
             _cache(std::vector<T>()),
             _indices(std::vector<unsigned int>()),
-            _indexStr(std::move(indexStr)),
+            _rawIndices(std::move(rawIndices)),
             _isDirty(true) {
+            size_t index{0};
             for (LayoutElement& e : _layout) {
-                e._isDirty = &_isDirty;
+                e._isDirty = &this->_isDirty;
+                _identifierMap.emplace(e.identifier, index);
+                index++;
             }
         }
 
-        explicit VertexLayout(std::vector<LayoutElement> layout, std::map<std::string, unsigned int> identifierMap):
-            VertexLayout(std::move(layout), std::move(identifierMap), std::move(std::string())) {};
+        explicit VertexLayout(std::vector<LayoutElement> layout, std::map<std::string, size_t> identifierMap):
+            VertexLayout(std::move(layout), std::move(identifierMap), std::move(std::vector<unsigned int>())) {};
 };

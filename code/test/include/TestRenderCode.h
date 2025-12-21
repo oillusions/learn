@@ -42,7 +42,7 @@ class TestRenderCube {
         std::map<std::string, Model> models;
         double _delta{};
 
-        Node<Transform> rootNode = Node<Transform>("root");
+        Node<Transform> rootNode;
         glm::mat4 proj{1.0f};
         Transform camera;
 };

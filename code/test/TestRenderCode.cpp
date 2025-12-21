@@ -21,7 +21,8 @@ fs::path modelPath = "resource/model/model.obj";
 double center_x{0}, center_y{0};
 
 TestRenderCube::TestRenderCube(GLFWwindow* window):
-    window(window)
+    window(window),
+    rootNode(Node<Transform>("root"))
 {
     proj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     data = stbi_load("resource/texture/texture.jpg", &width, &height, &nrChannels, 0);
@@ -106,8 +107,9 @@ string TestRenderCube::fileLoader(const fs::path& path) {
         cerr << "文件无法打开: " << path << endl;
         return {};
     }
-
-    return {istreambuf_iterator<char>(file), istreambuf_iterator<char>()};
+    string out{istreambuf_iterator<char>(file), istreambuf_iterator<char>()};
+    file.close();
+    return out;
 }
 
 void TestRenderCube::onFrameBufferSizeCallback(int width, int height) {
