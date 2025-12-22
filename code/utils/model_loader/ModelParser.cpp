@@ -18,7 +18,7 @@ std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader::parser(
     while (getline(sourceIss, line)) {
         if (line[0] == '#' || line.empty()) continue;
         if (line[0] == 'o') {
-            objectProcess(line.substr(2, line.back()), sourceIss, models, v_size, t_size, n_size);
+            objectProcess(line.substr(2), sourceIss, models, v_size, t_size, n_size);
         }
     }
     cout << "总顶点数 " << v_size.count + t_size.count + n_size.count << endl;
@@ -50,7 +50,7 @@ void ModelParser::ObjModelLoader::objectProcess(const string& name, istringstrea
         }
         lineProcess(line, vertices, texCoord, normal, indices, local_v, local_t, local_n);
     }
-    cout << "加载模型 " << name << ": " << endl;
+    cout << "加载模型 " << name << ", v起点:" << local_v.start << ",t起点:" << local_t.start << ",n起点:" << local_n.start << ": " << endl;
     if (!vertices.empty()) {
         vertices.shrink_to_fit();
         builder.appendElement("vertices", 3)
@@ -112,22 +112,21 @@ void ModelParser::ObjModelLoader::lineProcess(const std::string &line, vector<fl
                 while (getline(tokenIss, index, '/')) {
                     switch (counterIndex) {
                         case 0: {
-                            indices.push_back(stoull(index) - v.start);
+                            indices.push_back(stoull(index) - 1 - v.start);
                             break;
                         }
                         case 1: {
-                            indices.push_back(stoull(index) - t.start);
+                            indices.push_back(stoull(index) - 1 - t.start);
                             break;
                         }
                         case 2: {
-                            indices.push_back(stoull(index) - n.start);
+                            indices.push_back(stoull(index) - 1 - n.start);
                             break;
                         }
                         default: break;
                     }
                     counterIndex++;
                 }
-                break;
             }
         }
     }

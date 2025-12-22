@@ -47,7 +47,10 @@ void TestRenderCube::init() {
     for (auto& e : modelVertices) {
         cout << "modelName: " << e.first << endl;
         e.second.test();
-        models.emplace(e.first, Model(e.first, rootNode.addChild(e.first), std::move(e.second)));
+        models.emplace(piecewise_construct,
+            forward_as_tuple(e.first),
+            forward_as_tuple(e.first, rootNode.addChild(e.first), std::move(e.second))
+        );
     }
     for (auto& model : models) {
         model.second.init();
@@ -72,10 +75,8 @@ void TestRenderCube::init() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 
-
-
     glEnable(GL_DEPTH_TEST);
-    camera.translate({0.0f, 0.0f, 1.0f});
+    camera.translate({0.0f, 0.25f, 1.0f});
     camera.configInverse();
 
     stbi_image_free(data);
@@ -84,7 +85,8 @@ void TestRenderCube::init() {
 void TestRenderCube::render(double delta) {
     _delta = delta;
 
-    glClearColor(0.78431372f, 0.78431372f, 1.0f, 0.0f);
+    // glClearColor(0.78431372f, 0.78431372f, 1.0f, 1.00f);
+    glClearColor(0.0f, 0.0f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     static Bezier test({0.25 ,0.1}, {0.25, 1.0});
@@ -150,7 +152,7 @@ void TestRenderCube::onKeyCallback(int key, int scancode, int action, int mods) 
         case GLFW_KEY_R: {
 
             camera.setRotate({0, 0, 0})
-                .setTranslate({0, 0, 1.0f});
+                .setTranslate({0.0f, 0.25f, 1.0f});
             break;
         }
         case GLFW_KEY_SPACE: {

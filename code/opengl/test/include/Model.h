@@ -1,6 +1,5 @@
 #pragma once
 #include <filesystem>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -11,14 +10,14 @@
 
 class Model {
     public:
-        Model(const std::string& name, Node<Transform>& modelTransformNode, VertexLayout<float> modelVertices);
+        Model(const std::string& name, Node<Transform>::IndexWrapper modelTransformNode, VertexLayout<float> modelVertices);
         ~Model();
 
         Model(const Model& other) = delete;
         Model& operator = (const Model& other) = delete;
 
-        Model(Model&& other) noexcept;
-        Model& operator = (Model&& other) noexcept;
+        Model(Model&& other) = default;
+        Model& operator = (Model&& other) = default;
 
         void init();
         void render(double delta, const glm::mat4& projection, const glm::mat4& camera);
@@ -33,7 +32,8 @@ class Model {
         VertexLayout<float> _modelVertices;
         std::vector<float> vv;
         std::vector<unsigned int> vi;
-        Node<Transform>& _modelRootNode;
-        Node<Transform>& _modelInitTransform;
+        Node<Transform>::IndexWrapper _modelRootNode;
+        Node<Transform>::IndexWrapper _modelInitTransform;
+        std::vector<std::reference_wrapper<Transform>> _transformChain;
 
 };

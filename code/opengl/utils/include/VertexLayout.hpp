@@ -312,8 +312,11 @@ class VertexLayout {
                 stepCounter++;
                 elementIndex++;
                 elementIndex %= _layout.size();
-                _indices.push_back(indexCounter);
-                indexCounter++;
+
+                if (elementIndex == 0) {
+                    _indices.push_back(indexCounter);
+                    indexCounter++;
+                }
             }
             _isDirty = false;
             return _cache;
