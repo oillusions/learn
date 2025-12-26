@@ -69,7 +69,6 @@ class VertexLayout {
                 const float& operator [] (size_t index) const {
                     return _source[index];
                 }
-
             };
 
         class LayoutBuilder {

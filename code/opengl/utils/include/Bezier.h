@@ -12,10 +12,16 @@ class Bezier {
         Bezier(Bezier&& other) noexcept = default;
         Bezier& operator = (Bezier&& other) noexcept = default;
 
-        [[nodiscard]] double get_x(double t) const;
-        [[nodiscard]] double get_y(double t) const;
+        [[nodiscard]] double x(double t) const;
+        [[nodiscard]] double y(double t) const;
 
-        glm::vec2 get(double t) const;
+        [[nodiscard]] double derivative_x(double t) const;
+        [[nodiscard]] double derivative_y(double t) const;
+
+        [[nodiscard]] double reverse_x(double t, size_t accuracy = 3) const;
+        [[nodiscard]] double reverse_y(double t, size_t accuracy = 3) const;
+
+        [[nodiscard]] glm::vec2 get(double t) const;
 
         glm::vec2 operator [] (double t) const;
     private:

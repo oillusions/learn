@@ -25,6 +25,8 @@ set(GLM_BUILD_LIBRARY OFF)
 add_subdirectory(code/opengl/shader)
 add_subdirectory(code/opengl/utils)
 add_subdirectory(code/opengl/test)
+add_subdirectory(code/utils/event_bus)
+add_subdirectory(code/utils/logger)
 add_subdirectory(code/utils/model_loader)
 add_subdirectory(code/test)
 
@@ -37,6 +39,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
 	gl::Shader
 	gl::Utils
 	gl::test
+	utils::EventBus
+	utils::Logger
 	utils::ModelLoader
 	Test
 )

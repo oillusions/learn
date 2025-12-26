@@ -11,6 +11,7 @@ target_include_directories(Test PUBLIC
 )
 
 target_sources(Test PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TestRenderCode.cpp
 )
 
@@ -22,5 +23,6 @@ target_link_libraries(Test PRIVATE
 	gl::Shader
 	gl::Utils
 	gl::test
+	utils::EventBus
 	utils::ModelLoader
 )

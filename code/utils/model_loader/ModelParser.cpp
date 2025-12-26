@@ -50,7 +50,7 @@ void ModelParser::ObjModelLoader::objectProcess(const string& name, istringstrea
         }
         lineProcess(line, vertices, texCoord, normal, indices, local_v, local_t, local_n);
     }
-    cout << "加载模型 " << name << ", v起点:" << local_v.start << ",t起点:" << local_t.start << ",n起点:" << local_n.start << ": " << endl;
+    cout << "加载模型 " << name << endl;
     if (!vertices.empty()) {
         vertices.shrink_to_fit();
         builder.appendElement("vertices", 3)

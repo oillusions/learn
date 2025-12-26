@@ -3,14 +3,15 @@
 #include <string>
 #include <vector>
 
-#include "Node.hpp"
-#include "ShaderProgram.h"
-#include "Transform.h"
-#include "VertexLayout.hpp"
+#include <EventBus.hpp>
+#include <Node.hpp>
+#include <ShaderProgram.h>
+#include <Transform.h>
+#include <VertexLayout.hpp>
 
 class Model {
     public:
-        Model(const std::string& name, Node<Transform>::IndexWrapper modelTransformNode, VertexLayout<float> modelVertices);
+        Model(const std::string& name, Node<Transform>::IndexWrapper modelTransformNode, VertexLayout<float> modelVertices, const EventBus& ebus);
         ~Model();
 
         Model(const Model& other) = delete;
@@ -20,6 +21,7 @@ class Model {
         Model& operator = (Model&& other) = default;
 
         void init();
+        void transformInit();
         void render(double delta, const glm::mat4& projection, const glm::mat4& camera);
     private:
         std::string _name;
@@ -35,5 +37,9 @@ class Model {
         Node<Transform>::IndexWrapper _modelRootNode;
         Node<Transform>::IndexWrapper _modelInitTransform;
         std::vector<std::reference_wrapper<Transform>> _transformChain;
+
+        const EventBus& _ebus;
+        bool k{false};
+        float t{0.0f};
 
 };
