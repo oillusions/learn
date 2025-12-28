@@ -11,7 +11,7 @@
 
 class Model {
     public:
-        Model(const std::string& name, Node<Transform>::IndexWrapper modelTransformNode, VertexLayout<float> modelVertices, const EventBus& ebus);
+        Model(const std::string& name, Node<Transform>& modelTransformNode, VertexLayout<float> modelVertices, const EventBus& ebus);
         ~Model();
 
         Model(const Model& other) = delete;
@@ -34,9 +34,9 @@ class Model {
         VertexLayout<float> _modelVertices;
         std::vector<float> vv;
         std::vector<unsigned int> vi;
-        Node<Transform>::IndexWrapper _modelRootNode;
-        Node<Transform>::IndexWrapper _modelInitTransform;
-        std::vector<std::reference_wrapper<Transform>> _transformChain;
+        Node<Transform>& _modelRootNode;
+        Node<Transform>& _modelInitTransform;
+        std::vector<std::reference_wrapper<const Transform>> _transformChain;
 
         const EventBus& _ebus;
         bool k{false};

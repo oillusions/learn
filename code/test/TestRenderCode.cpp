@@ -134,7 +134,6 @@ void TestRenderCube::render(double delta) {
     camera._delta = delta;
 
     glm::mat4 gui_proj = glm::perspective(glm::radians(90.0f), static_cast<float>(fWidth) / static_cast<float>(fHeight), 0.001f, 100.0f);
-    cout << "w:" << fWidth << ", h:" << fHeight << endl;
 
     const glm::mat4& cameraMatrix = camera.viewMatrix();
 
@@ -209,7 +208,7 @@ void TestRenderCube::onKeyCallback(int key, int scancode, int action, int mods) 
         }
         case GLFW_KEY_R: {
             camera._perspective = {1.0f, 0.0f, 0.0f, 0.0f};
-            camera._position = {0.0f, 0.25f, 1.0f};
+            camera._position = {0.0f, 0.0f, 1.0f};
             break;
         }
         case GLFW_KEY_SPACE: {

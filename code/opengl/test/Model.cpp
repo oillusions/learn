@@ -11,7 +11,7 @@ namespace fs = filesystem;
 const fs::path vertexPath = "resource/shader/vertex.glsl";
 const fs::path fragmentPath = "resource/shader/fragment.glsl";
 
-Model::Model(const std::string &name, Node<Transform>::IndexWrapper modelTransformNode , VertexLayout<float> modelVertices, const EventBus& ebus):
+Model::Model(const std::string &name, Node<Transform>& modelTransformNode , VertexLayout<float> modelVertices, const EventBus& ebus):
     _name(name),
     vertexShader(Shader(Shader::Vertex, TestRenderCube::fileLoader(vertexPath))),
     fragmentShader(Shader(Shader::Fragment, TestRenderCube::fileLoader(fragmentPath))),
@@ -67,8 +67,8 @@ void Model::init() {
 }
 
 void Model::transformInit() {
-    Transform& initTransform = _modelInitTransform.get();
-    Transform& modelTransform = _modelRootNode.get();
+    Transform& initTransform = _modelInitTransform;
+    Transform& modelTransform = _modelRootNode;
 
     if (_name == "嘴") {
         initTransform.setTranslate({0.0f, 0.264522f, 0.303543f});
@@ -107,7 +107,7 @@ void Model::render(double delta, const glm::mat4 &projection, const glm::mat4 &c
     Bezier curve({0.0, 1.0}, {1.0, 0.0});
 
     if (_transformChain.empty()) {
-        _transformChain = _modelInitTransform.getTraceToRoot();
+        _transformChain = _modelInitTransform.tracebackToRoot();
     }
     Transform& modelTransform = _modelRootNode.get();
 
