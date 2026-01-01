@@ -10,6 +10,7 @@ target_sources(ModelLoader PRIVATE
 
 target_link_libraries(ModelLoader PRIVATE
 	gl::Utils
+	utils::Logger
 )
 
 

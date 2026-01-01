@@ -11,6 +11,8 @@ target_sources(test INTERFACE
 target_link_libraries(test INTERFACE
 	glad::glad
 	glm::glm
+	utils::Container
+	utils::Logger
 )
 
 

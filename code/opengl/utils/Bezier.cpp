@@ -72,17 +72,14 @@ double Bezier::derivative_y(double t) const {
         + 3.0 * t2 * (_end.y - _control1.y);
 }
 
-double Bezier::reverse_x(double t, size_t accuracy) const {
+double Bezier::inverse_x(double t, size_t accuracy) const {
     if (t <= 0) return _start.x;
     if (t >= 1.0) return _end.x;
-    double l = 0, r = 1;
+    double l{_start.x}, r{_end.x};
     double root{};
     for (uint8_t i = 0; i < 3; i++) {
         root = l + (r - l) / 2;
         double value = x(root) - t;
-        if (abs(value) < 1e-5) {
-            break;
-        }
         if (value > 0.0) {
             r = root;
         } else {
@@ -95,21 +92,17 @@ double Bezier::reverse_x(double t, size_t accuracy) const {
         double current_x_ = derivative_x(root);
         root = root - current_x / current_x_;
     }
-
     return root;
 }
 
-double Bezier::reverse_y(double t, size_t accuracy) const {
+double Bezier::inverse_y(double t, size_t accuracy) const {
     if (t <= 0) return _start.y;
     if (t >= 1.0) return _end.y;
-    double l = 0, r = 1;
+    double l{_start.y}, r{_end.y};
     double root{};
     for (uint8_t i = 0; i < 3; i++) {
         root = l + (r - l) / 2;
         double value = y(root) - t;
-        if (abs(value) < 1e-5) {
-            break;
-        }
         if (value > 0.0) {
             r = root;
         } else {

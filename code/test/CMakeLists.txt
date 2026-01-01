@@ -23,6 +23,7 @@ target_link_libraries(Test PRIVATE
 	gl::Shader
 	gl::Utils
 	gl::test
+	utils::Container
 	utils::EventBus
 	utils::ModelLoader
 )

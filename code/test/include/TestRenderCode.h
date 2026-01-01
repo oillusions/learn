@@ -14,10 +14,10 @@
 
 #include "Camera.h"
 
-class TestRenderCube {
+class TestRenderCode {
     public:
-        explicit TestRenderCube(GLFWwindow* window);
-        ~TestRenderCube();
+        explicit TestRenderCode(GLFWwindow* window, EventBus& ebus);
+        ~TestRenderCode();
 
         void init();
         void render(double delta);
@@ -39,9 +39,10 @@ class TestRenderCube {
 
     private:
         GLFWwindow* window;
-        EventBus ebus;
+        EventBus& ebus;
         unsigned int texture{};
-        int width{}, height{}, nrChannels{};
+        int texWidth{}, texHeight{}, texNrChannels{};
+        int frameWidth{}, frameHeight{};
         unsigned char* data{};
         std::map<std::string, Model> models;
         double _delta{};

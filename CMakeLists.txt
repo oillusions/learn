@@ -8,6 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(CMAKE_BUILD_PARALLEL_LEVEL 8)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 list(APPEND CMAKE_PREFIX_PATH "C:/libs/cmake/glfw")
 list(APPEND CMAKE_PREFIX_PATH "C:/libs/cmake/glm")
@@ -25,6 +27,7 @@ set(GLM_BUILD_LIBRARY OFF)
 add_subdirectory(code/opengl/shader)
 add_subdirectory(code/opengl/utils)
 add_subdirectory(code/opengl/test)
+add_subdirectory(code/utils/container)
 add_subdirectory(code/utils/event_bus)
 add_subdirectory(code/utils/logger)
 add_subdirectory(code/utils/model_loader)
@@ -39,6 +42,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
 	gl::Shader
 	gl::Utils
 	gl::test
+	utils::Container
 	utils::EventBus
 	utils::Logger
 	utils::ModelLoader

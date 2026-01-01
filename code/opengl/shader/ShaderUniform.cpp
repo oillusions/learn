@@ -15,13 +15,13 @@ void ShaderUniform::setFloat(float value) {
 }
 
 void ShaderUniform::setInt(int value) {
-    if (_type == GL_FLOAT) {
+    if (_type == GL_INT) {
         glUniform1i(_location, value);
     }
 }
 
 void ShaderUniform::setBool(bool value) {
-    if (_type == GL_FLOAT) {
+    if (_type == GL_BOOL) {
         glUniform1i(_location, value);
     }
 }

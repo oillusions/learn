@@ -1,16 +1,8 @@
-add_library(Logger STATIC)
+add_library(Logger INTERFACE)
 
-target_include_directories(Logger PUBLIC
+target_include_directories(Logger INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_SOURCE_DIR}/
 )
-
-target_sources(Logger PRIVATE
-#	${CMAKE_CURRENT_SOURCE_DIR}/ModelParser.cpp
-)
-
-target_link_libraries(Logger PRIVATE
-	gl::Utils
-)
-
 
 add_library(utils::Logger ALIAS Logger)

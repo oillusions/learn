@@ -1,0 +1,144 @@
+#pragma once
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <string>
+
+
+/**
+ * @brief 日志器本体
+ * @details 他似乎不需要详细注释[划掉]
+ * @tparam LogLevelEnum 日志等级
+ * @tparam AdditionInfo 日志记录附加信息
+ */
+template<typename LogLevelEnum, typename AdditionInfo>
+class Logger {
+    static_assert(std::is_enum_v<LogLevelEnum>, "错误: 日志器模板类型[ LogLevelEnum ]必须为枚举类型");
+    static_assert(std::is_default_constructible_v<AdditionInfo>, "错误: 日志器模板类型[ AdditionInfo ]必须实现默认构造");
+    public:
+        struct LogRecord {
+            LogLevelEnum level;
+            std::string message;
+            AdditionInfo additionInfo;
+        };
+
+        /**
+         * @brief 日志器构建者
+         * @details 他似乎不需要详细注释[划掉]
+         */
+        class LoggerBuilder {
+            public:
+                LoggerBuilder() = default;
+                ~LoggerBuilder() = default;
+
+                /**
+                 * @brief 添加日志过滤器
+                 * @details 他似乎不需要详细注释[划掉]
+                 * @param filter 过滤器回调
+                 * @return 构建者引用
+                 */
+                LoggerBuilder& appendFilter(std::function<bool(const LogRecord&)> filter) {
+                    filters.push_back(filter);
+                    return *this;
+                }
+
+                /**
+                 * @brief 配置日志格式化器
+                 * @details 他似乎不需要详细注释[划掉]
+                 * @param formatter 格式化器回调
+                 * @return 构建者引用
+                 */
+                LoggerBuilder& formatter(std::function<std::string(const LogRecord&)> formatter) {
+                    _formatter = std::move(formatter);
+                    return *this;
+                }
+
+                /**
+                 * @brief 添加日志处理器
+                 * @details 他似乎不需要详细注释[划掉]
+                 * @param handler 处理器回调
+                 * @return 构建者引用
+                 */
+                LoggerBuilder& appendHandler(std::function<void(LogRecord&, const std::string&)> handler) {
+                    handlers.push_back(handler);
+                    return *this;
+                }
+
+                /**
+                 * @brief 构建日志器
+                 * @details 他似乎不需要详细注释[划掉]
+                 * @return 日志器
+                 */
+                Logger build() {
+                    return Logger(std::move(filters), std::move(_formatter), std::move(handlers));
+                }
+            private:
+                std::function<std::string(const LogRecord&)> _formatter;
+                std::vector<std::function<bool(const LogRecord&)>> filters;
+                std::vector<std::function<void(LogRecord&, const std::string&)>> handlers;
+
+
+        };
+
+        ~Logger() = default;
+
+        /**
+         * @brief 获取构建器
+         * @details 他似乎不需要详细注释[划掉]
+         * @return 构建器
+         */
+        static LoggerBuilder builder() {
+            return {};
+        }
+
+        /**
+         * @brief 添加日志
+         * @details 他似乎不需要详细注释[划掉]
+         * @param level 日志等级
+         * @param message 日志消息
+         * @param info 日志附加信息
+         */
+        void log(LogLevelEnum level, const std::string& message, AdditionInfo info = {}) {
+            LogRecord record{level, message, info};
+            for (auto& e : _filters) {
+                if (!e(record)) {return;}
+            }
+            std::string str = _formatter(record);
+            for (auto& e : _handlers) {
+                e(record, str);
+            }
+        }
+
+    /**
+     * @brief 添加日志[模板]
+     * @details 他似乎不需要详细注释[划掉]
+     * @tparam Level 日志等级
+     * @param message 日志消息
+     * @param info 日志附加信息
+     */
+    template<LogLevelEnum Level>
+        void log(const std::string& message, AdditionInfo info = {}) {
+            log(Level, message, info);
+        }
+
+    private:
+        std::vector<std::function<bool(const LogRecord &)> > _filters;
+        std::function<std::string(const LogRecord &)> _formatter;
+        std::vector<std::function<void(LogRecord&, const std::string &)> > _handlers;
+
+        /**
+         * @brief 构建者使用的日志器构造
+         * @details 他似乎不需要详细注释[划掉]
+         * @param filters 过滤器数组
+         * @param formatter 格式化器
+         * @param handlers 处理器数组
+         */
+        Logger(std::vector<std::function<bool(const LogRecord &)> > filters,
+           std::function<std::string(const LogRecord &)> formatter,
+           std::vector<std::function<void(LogRecord &, const std::string &)> > handlers):
+                _filters(std::move(filters)),
+                _formatter(std::move(formatter)),
+                _handlers(std::move(handlers)){
+    }
+};
+
