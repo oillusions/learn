@@ -31,6 +31,7 @@ add_subdirectory(code/utils/container)
 add_subdirectory(code/utils/event_bus)
 add_subdirectory(code/utils/logger)
 add_subdirectory(code/utils/model_loader)
+add_subdirectory(code/utils/resource)
 add_subdirectory(code/test)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
@@ -46,6 +47,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
 	utils::EventBus
 	utils::Logger
 	utils::ModelLoader
+	utils::Resource
 	Test
 )
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")

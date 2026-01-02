@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <mutex>
+#include <queue>
 #include <string>
 
 
@@ -22,6 +24,11 @@ class Logger {
             AdditionInfo additionInfo;
         };
 
+        using FilterType = std::function<bool(const LogRecord&)>;
+        using FormatterType = std::function<std::string(const LogRecord&)>;
+        using HandlerType = std::function<void(const LogRecord&, const std::string&)>;
+
+
         /**
          * @brief 日志器构建者
          * @details 他似乎不需要详细注释[划掉]
@@ -37,7 +44,7 @@ class Logger {
                  * @param filter 过滤器回调
                  * @return 构建者引用
                  */
-                LoggerBuilder& appendFilter(std::function<bool(const LogRecord&)> filter) {
+                LoggerBuilder& appendFilter(const FilterType& filter) {
                     filters.push_back(filter);
                     return *this;
                 }
@@ -48,8 +55,8 @@ class Logger {
                  * @param formatter 格式化器回调
                  * @return 构建者引用
                  */
-                LoggerBuilder& formatter(std::function<std::string(const LogRecord&)> formatter) {
-                    _formatter = std::move(formatter);
+                LoggerBuilder& formatter(const FormatterType& formatter) {
+                    _formatter = formatter;
                     return *this;
                 }
 
@@ -59,7 +66,7 @@ class Logger {
                  * @param handler 处理器回调
                  * @return 构建者引用
                  */
-                LoggerBuilder& appendHandler(std::function<void(LogRecord&, const std::string&)> handler) {
+                LoggerBuilder& appendHandler(const HandlerType& handler) {
                     handlers.push_back(handler);
                     return *this;
                 }
@@ -73,9 +80,11 @@ class Logger {
                     return Logger(std::move(filters), std::move(_formatter), std::move(handlers));
                 }
             private:
-                std::function<std::string(const LogRecord&)> _formatter;
-                std::vector<std::function<bool(const LogRecord&)>> filters;
-                std::vector<std::function<void(LogRecord&, const std::string&)>> handlers;
+                FormatterType _formatter;
+                std::vector<FilterType> filters;
+                std::vector<HandlerType> handlers;
+
+                std::queue<LogRecord> _logQueue;
 
 
         };
@@ -99,7 +108,25 @@ class Logger {
          * @param info 日志附加信息
          */
         void log(LogLevelEnum level, const std::string& message, AdditionInfo info = {}) {
-            LogRecord record{level, message, info};
+            {
+                std::lock_guard lock(mtx);
+                processRecord(LogRecord{level, message, info});
+            }
+        }
+
+        /**
+         * @brief 添加日志[模板]
+         * @details 他似乎不需要详细注释[划掉]
+         * @tparam Level 日志等级
+         * @param message 日志消息
+         * @param info 日志附加信息
+         */
+        template<LogLevelEnum Level>
+        void log(const std::string& message, AdditionInfo info = {}) {
+            log(Level, message, info);
+        }
+
+        void processRecord(const LogRecord& record) {
             for (auto& e : _filters) {
                 if (!e(record)) {return;}
             }
@@ -109,22 +136,12 @@ class Logger {
             }
         }
 
-    /**
-     * @brief 添加日志[模板]
-     * @details 他似乎不需要详细注释[划掉]
-     * @tparam Level 日志等级
-     * @param message 日志消息
-     * @param info 日志附加信息
-     */
-    template<LogLevelEnum Level>
-        void log(const std::string& message, AdditionInfo info = {}) {
-            log(Level, message, info);
-        }
-
     private:
-        std::vector<std::function<bool(const LogRecord &)> > _filters;
-        std::function<std::string(const LogRecord &)> _formatter;
-        std::vector<std::function<void(LogRecord&, const std::string &)> > _handlers;
+        std::vector<FilterType> _filters;
+        FormatterType _formatter;
+        std::vector<HandlerType> _handlers;
+
+        std::mutex mtx;
 
         /**
          * @brief 构建者使用的日志器构造
@@ -133,9 +150,9 @@ class Logger {
          * @param formatter 格式化器
          * @param handlers 处理器数组
          */
-        Logger(std::vector<std::function<bool(const LogRecord &)> > filters,
-           std::function<std::string(const LogRecord &)> formatter,
-           std::vector<std::function<void(LogRecord &, const std::string &)> > handlers):
+        Logger(std::vector<FilterType> filters,
+           FormatterType formatter,
+           std::vector<HandlerType> handlers):
                 _filters(std::move(filters)),
                 _formatter(std::move(formatter)),
                 _handlers(std::move(handlers)){

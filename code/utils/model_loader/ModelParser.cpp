@@ -1,11 +1,14 @@
 #include "ModelParser.h"
 #include <sstream>
 
+#include "GlobalLogger.hpp"
+
 using namespace std;
 
 std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader(const std::string &source) {
     if (source.empty()) {
-        throw runtime_error("错误: obj模型加载器源为空");
+        glog.log<DefaultLevel::Error>("错误: obj模型源为空");
+        throw;
     }
     return ObjModelLoader::parser(source);
 }
@@ -21,7 +24,6 @@ std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader::parser(
             objectProcess(line.substr(2), sourceIss, models, v_size, t_size, n_size);
         }
     }
-    cout << "总顶点数 " << v_size.count + t_size.count + n_size.count << endl;
     return models;
 }
 
@@ -50,27 +52,22 @@ void ModelParser::ObjModelLoader::objectProcess(const string& name, istringstrea
         }
         lineProcess(line, vertices, texCoord, normal, indices, local_v, local_t, local_n);
     }
-    cout << "加载模型 " << name << endl;
     if (!vertices.empty()) {
         vertices.shrink_to_fit();
         builder.appendElement("vertices", 3)
             .attachSource("vertices", std::move(vertices));
-        cout << name << ": 添加Vertices, 总计 " << local_v.count << " 顶点" << endl;
     }
     if (!texCoord.empty()) {
         texCoord.shrink_to_fit();
         builder.appendElement("texCoord", 2)
             .attachSource("texCoord", std::move(texCoord));
-        cout << name << ": 添加TexCoord, 总计 " << local_t.count << "顶点" << endl;
     }
     if (!normal.empty()) {
         normal.shrink_to_fit();
         builder.appendElement("normal", 3)
             .attachSource("normal", std::move(normal));
-        cout << name << ": 添加Normal, 总计 " << local_n.count << "顶点" << endl;
     }
     if (!indices.empty()) {
-        cout << name << ": 添加Indices, 总计 " << indices.size() << endl;
         builder.attachIndices(std::move(indices));
     }
     models.emplace(name, std::move(builder.build()));

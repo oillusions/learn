@@ -8,10 +8,11 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stb_image.h>
 
 #include <TestRenderCode.h>
 #include <GlobalLogger.hpp>
+#include <Resource.hpp>
+#include <ResourceTypes.hpp>
 
 using namespace std;
 namespace fs = filesystem;
@@ -22,6 +23,7 @@ double lastTime{};
 GLFWwindow* window{nullptr};
 
 void render() {
+    glog.log<DefaultLevel::Info>("渲染线程已启动");
     glfwMakeContextCurrent(window);
     EventBus ebus{};
 
@@ -29,6 +31,8 @@ void render() {
         glog.log(DefaultLevel::Error, "glad初始化失败");
         return;
     }
+
+    arm.load<Texture>("texture.default", "resource/texture/texture.jpg");
 
     TestRenderCode test(window, ebus);
     test.init();
@@ -44,13 +48,16 @@ void render() {
         test.render(deltaTime);
         glfwSwapBuffers(window);
     }
+    glog.log<DefaultLevel::Info>("渲染线程已结束");
 }
 
 int main() {
-
-    glog.log(DefaultLevel::Info, "测试");
-
     stbi_set_flip_vertically_on_load(true);
+
+    globalLogger::_minLevel = DefaultLevel::Debug;
+    glog.log(DefaultLevel::Info, "程序已启动");
+
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -65,12 +72,13 @@ int main() {
 
     thread openglThread(render);
 
-    openglThread.detach();
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
 
+    openglThread.join();
     glfwTerminate();
+
+    glog.log<DefaultLevel::Info>("程序已结束");
     return 0;
 }

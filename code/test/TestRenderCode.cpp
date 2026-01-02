@@ -23,11 +23,10 @@ fs::path modelPath = "resource/model/model.obj";
 TestRenderCode::TestRenderCode(GLFWwindow* window, EventBus& ebus):
     window(window),
     ebus(ebus),
-    rootNode(Node<Transform>("root"))
+    rootNode(Node<Transform>("root")),
+    texture(arm.find<Texture>("texture.default"))
 {
     glfwSetWindowUserPointer(window, this);
-    proj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    data = stbi_load("resource/texture/texture.jpg", &texWidth, &texHeight, &texNrChannels, 0);
 
     camera.init(window, ebus);
 
@@ -36,10 +35,6 @@ TestRenderCode::TestRenderCode(GLFWwindow* window, EventBus& ebus):
 
     camera._center_x = 800 / 2;
     camera._center_y = 600 / 2;
-}
-
-TestRenderCode::~TestRenderCode() {
-    glDeleteTextures(1, &texture);
 }
 
 
@@ -61,24 +56,9 @@ void TestRenderCode::init() {
         model.second.init();
     }
 
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glActiveTexture(GL_TEXTURE0);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    if (data == nullptr) {
-        cerr << "纹理加载失败" << endl;
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
     glEnable(GL_DEPTH_TEST);
     camera._position = {0.0f, -0.0f, 1.0f};
+    proj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
     stbi_image_free(data);
 }
@@ -122,8 +102,8 @@ string TestRenderCode::fileLoader(const fs::path& path) {
 void TestRenderCode::onFrameBufferSizeCallback(int width, int height) {
     FrameSize_Event content{window, width, height};
     ebus.publish("frame-size-callback", content);
-    this->frameWidth = width;
-    this->frameHeight = height;
+    this->frameWidth = width == 0 ? 1 : width;
+    this->frameHeight = height == 0 ? 1 : height;
 }
 
 void TestRenderCode::onScrollCallback(double x_offset, double y_offset) {

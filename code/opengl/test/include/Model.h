@@ -9,6 +9,8 @@
 #include <Transform.h>
 #include <VertexLayout.hpp>
 
+#include "ResourceTypes.hpp"
+
 class Model {
     public:
         Model(const std::string& name, Node<Transform>& modelTransformNode, VertexLayout<float> modelVertices, const EventBus& ebus);
@@ -25,9 +27,9 @@ class Model {
         void render(double delta, const glm::mat4& projection, const glm::mat4& camera);
     private:
         std::string _name;
-        unsigned int vao{};
-        unsigned int vbo{};
-        unsigned int ebo{};
+        VertexArrays vao{};
+        BufferObject vbo{};
+        BufferObject ebo{};
         Shader vertexShader;
         Shader fragmentShader;
         ShaderProgram program;

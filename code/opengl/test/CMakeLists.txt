@@ -13,6 +13,7 @@ target_link_libraries(test INTERFACE
 	glm::glm
 	utils::Container
 	utils::Logger
+	utils::Resource
 )
 
 

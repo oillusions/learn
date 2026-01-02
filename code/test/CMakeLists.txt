@@ -26,4 +26,6 @@ target_link_libraries(Test PRIVATE
 	utils::Container
 	utils::EventBus
 	utils::ModelLoader
+	utils::Resource
+	utils::Logger
 )

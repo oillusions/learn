@@ -13,11 +13,12 @@
 #include <EventBus.hpp>
 
 #include "Camera.h"
+#include "ResourceTypes.hpp"
 
 class TestRenderCode {
     public:
         explicit TestRenderCode(GLFWwindow* window, EventBus& ebus);
-        ~TestRenderCode();
+        ~TestRenderCode() = default;
 
         void init();
         void render(double delta);
@@ -40,8 +41,7 @@ class TestRenderCode {
     private:
         GLFWwindow* window;
         EventBus& ebus;
-        unsigned int texture{};
-        int texWidth{}, texHeight{}, texNrChannels{};
+        const Texture& texture;
         int frameWidth{}, frameHeight{};
         unsigned char* data{};
         std::map<std::string, Model> models;
