@@ -35,9 +35,6 @@ class TestRenderCode {
         void onMouseMoveCallback(double x, double y);
         void onMouseButtonCallback(int button, int action, int mods);
 
-
-        static std::string fileLoader(const std::filesystem::path& path);
-
     private:
         GLFWwindow* window;
         EventBus& ebus;

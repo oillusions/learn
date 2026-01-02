@@ -13,8 +13,8 @@ const fs::path fragmentPath = "resource/shader/fragment.glsl";
 
 Model::Model(const std::string &name, Node<Transform>& modelTransformNode , VertexLayout<float> modelVertices, const EventBus& ebus):
     _name(name),
-    vertexShader(Shader(Shader::Vertex, TestRenderCode::fileLoader(vertexPath))),
-    fragmentShader(Shader(Shader::Fragment, TestRenderCode::fileLoader(fragmentPath))),
+    vertexShader(Shader(Shader::Vertex, resource::utils::readFileToStr(vertexPath))),
+    fragmentShader(Shader(Shader::Fragment, resource::utils::readFileToStr(fragmentPath))),
     _modelVertices(std::move(modelVertices)),
     _modelRootNode(modelTransformNode),
     _modelInitTransform(_modelRootNode.addChild("ModelInitTransform")),

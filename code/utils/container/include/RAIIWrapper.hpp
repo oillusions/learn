@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * @brief RAII包装器
+ * @tparam T 包装值
+ */
 template<typename T>
 class RAIIWrapper {
     public:

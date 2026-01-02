@@ -13,6 +13,12 @@ namespace resource::utils {
     using namespace std;
     namespace fs = std::filesystem;
 
+    /**
+     * @brief 读取文件并转换为字符串
+     * @details 他似乎不需要详细注释[划掉]
+     * @param path 文件路径
+     * @return 字符串
+     */
     inline string readFileToStr(const fs::path& path) {
         if (!fs::exists(path)) {
             glog.log<DefaultLevel::Error>("文件不存在: " + path.string());
@@ -30,14 +36,24 @@ namespace resource::utils {
     }
 }
 
+
+/**
+ * @brief 纹理资源|RAII包装
+ * @details 负责实现了纹理贴图的加载与基于RAII的自动释放
+ */
 class Texture: public RAIIWrapper<GLuint>, IResource {
     public:
+        /**
+         * @brief 纹理构造
+         * @details 他似乎不需要详细注释[划掉]
+         * @param path 纹理贴图路径
+         */
         explicit Texture(const std::filesystem::path& path) {
             uint8_t* data = stbi_load(path.string().c_str(), &imgWidth, &imgHeight, &nrChannels, 0);
 
             if (data == nullptr) {
                 glog.log<DefaultLevel::Error>("错误: 纹理文件无法加载: " + path.string());
-                throw;
+                std::terminate();
             }
             glGenTextures(1, &_value);
             glBindTexture(GL_TEXTURE_2D, _value);
@@ -56,6 +72,11 @@ class Texture: public RAIIWrapper<GLuint>, IResource {
             _value = 1;
             stbi_image_free(data);
         }
+
+        /**
+         * @brief 析构
+         * @details 基于RAII机制自动将纹理对象进行回收
+         */
         ~Texture() override {
             glog.log<DefaultLevel::Debug>("纹理对象已析构: " + std::to_string(_value));
             glDeleteTextures(1, &_value);
@@ -65,6 +86,10 @@ class Texture: public RAIIWrapper<GLuint>, IResource {
         int nrChannels{};
 };
 
+/**
+ * @brief 顶点数组对象的RAII包装
+ * @details 他似乎不需要详细注释[划掉]
+ */
 class VertexArrays: public RAIIWrapper<GLuint> {
     public:
         explicit VertexArrays(const GLuint value = 0) {
@@ -76,6 +101,10 @@ class VertexArrays: public RAIIWrapper<GLuint> {
         }
 };
 
+/**
+ * @brief 缓冲区兑现的RAII包装
+ * @details 他似乎不需要详细注释[划掉]
+ */
 class BufferObject: public RAIIWrapper<GLuint> {
     public:
         explicit BufferObject(const GLuint value = 0) {
@@ -87,4 +116,8 @@ class BufferObject: public RAIIWrapper<GLuint> {
         }
 };
 
+/**
+ * @brief 全局通用资源管理器
+ * @details 他似乎不需要详细注释[划掉]
+ */
 inline AnyResourceManager arm{};

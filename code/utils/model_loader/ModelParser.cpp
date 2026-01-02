@@ -8,7 +8,7 @@ using namespace std;
 std::map<std::string, VertexLayout<float> > ModelParser::ObjModelLoader(const std::string &source) {
     if (source.empty()) {
         glog.log<DefaultLevel::Error>("错误: obj模型源为空");
-        throw;
+        std::terminate();
     }
     return ObjModelLoader::parser(source);
 }

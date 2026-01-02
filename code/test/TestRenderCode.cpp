@@ -44,7 +44,7 @@ void TestRenderCode::init() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    map<string, VertexLayout<float>> modelVertices = ModelParser::ObjModelLoader(fileLoader(modelPath));
+    map<string, VertexLayout<float>> modelVertices = ModelParser::ObjModelLoader(resource::utils::readFileToStr(modelPath));
 
     for (auto& e : modelVertices) {
         models.emplace(piecewise_construct,
@@ -81,22 +81,6 @@ void TestRenderCode::render(double delta) {
         glBindTexture(GL_TEXTURE_2D, texture);
         model.second.render(delta, proj, cameraMatrix);
     }
-}
-
-string TestRenderCode::fileLoader(const fs::path& path) {
-    if (!fs::exists(path)) {
-        cerr << "文件不存在: " << path << endl;
-        return {};
-    }
-
-    ifstream file(path);
-    if (!file.is_open()) {
-        cerr << "文件无法打开: " << path << endl;
-        return {};
-    }
-    string out{istreambuf_iterator<char>(file), istreambuf_iterator<char>()};
-    file.close();
-    return out;
 }
 
 void TestRenderCode::onFrameBufferSizeCallback(int width, int height) {
